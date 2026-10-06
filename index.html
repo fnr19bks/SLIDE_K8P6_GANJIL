@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fungsi Dasar, Sort &amp; Filter — Informatika Kelas VIII</title>
+<style>
+  :root{
+    --bg:#0A1024;
+    --bg2:#131A3A;
+    --card:rgba(255,255,255,.07);
+    --line:rgba(140,180,255,.28);
+    --accent:#38BDF8;
+    --accent2:#FBBF24;
+    --accent3:#F472B6;
+    --green:#4ADE80;
+    --red:#FB7185;
+    --text:#EEF4FF;
+    --muted:#A8BBD8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:#050B1C;
+    font-family:"Segoe UI",Inter,system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);-webkit-font-smoothing:antialiased}
+
+  #stage{
+    position:absolute;top:50%;left:50%;
+    width:1280px;height:720px;
+    transform-origin:center center;
+    background:
+      radial-gradient(900px 520px at 12% -10%, #1A3A6E 0%, transparent 60%),
+      radial-gradient(800px 500px at 105% 110%, #26306B 0%, transparent 62%),
+      linear-gradient(160deg,var(--bg) 0%, var(--bg2) 100%);
+    border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 90px rgba(0,0,0,.65);
+  }
+  #stage::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,rgba(56,189,248,.06),transparent 40%,rgba(244,114,182,.06));
+  }
+
+  .slide{
+    position:absolute;inset:0;padding:42px 60px 54px;
+    opacity:0;visibility:hidden;
+    transform:translateY(26px) scale(.985);
+    transition:opacity .5s ease, transform .55s cubic-bezier(.22,.9,.3,1), visibility .5s;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none}
+
+  .eyebrow{
+    font-size:14px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;
+  }
+  h1.title{font-size:42px;line-height:1.1;font-weight:800;letter-spacing:-.5px}
+  h2.title{font-size:34px;line-height:1.12;font-weight:800;letter-spacing:-.4px}
+  .sub{font-size:20px;color:var(--muted)}
+  .lead{font-size:22px;line-height:1.42;color:#D7E7F7;max-width:1080px}
+  .hl{color:var(--accent2)}
+  .hl2{color:var(--accent)}
+  .hl3{color:var(--accent3)}
+
+  ul.bullets{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:4px}
+  ul.bullets li{font-size:21px;line-height:1.32;padding-left:40px;position:relative}
+  ul.bullets li::before{
+    content:"";position:absolute;left:8px;top:10px;width:13px;height:13px;
+    border-radius:5px;background:linear-gradient(135deg,var(--accent),#0ea5b7);
+    box-shadow:0 0 14px rgba(56,189,248,.55);
+  }
+  ul.bullets.gold li::before{background:linear-gradient(135deg,var(--accent2),#d97706);box-shadow:0 0 14px rgba(251,191,36,.5)}
+  ul.bullets.pink li::before{background:linear-gradient(135deg,var(--accent3),#be185d);box-shadow:0 0 14px rgba(244,114,182,.5)}
+
+  ol.steps{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:9px}
+  ol.steps li{counter-increment:s;font-size:20px;line-height:1.3;padding-left:52px;position:relative}
+  ol.steps li::before{
+    content:counter(s);position:absolute;left:0;top:-2px;width:34px;height:34px;
+    display:grid;place-items:center;border-radius:50%;
+    background:rgba(56,189,248,.15);border:2px solid var(--accent);
+    color:var(--accent);font-weight:800;font-size:16px;
+  }
+  ol.steps.gold li::before{background:rgba(251,191,36,.15);border-color:var(--accent2);color:var(--accent2)}
+
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:15px 18px;backdrop-filter:blur(4px);
+  }
+  .card h3{font-size:19px;font-weight:800;margin-bottom:6px;color:var(--accent)}
+  .card p{font-size:17px;line-height:1.38;color:#CBDFF2}
+  .card.gold h3{color:var(--accent2)}
+  .card.gold{border-color:rgba(251,191,36,.4)}
+  .card.pink h3{color:var(--accent3)}
+  .card.pink{border-color:rgba(244,114,182,.4)}
+  .card .big{font-size:24px;font-weight:800;color:#EEF4FF;line-height:1.15;font-family:"Consolas","Courier New",monospace}
+  .card .big.gold{color:var(--accent2)}
+  .card .big.pink{color:var(--accent3)}
+
+  .chips{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{
+    font-size:16px;font-weight:700;padding:7px 15px;border-radius:999px;
+    background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.45);color:#BAEBFF;
+  }
+  .chip.gold{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.5);color:#FDE7A9}
+  .chip.pink{background:rgba(244,114,182,.12);border-color:rgba(244,114,182,.5);color:#FBCFE8}
+
+  .code{
+    font-family:"Consolas","Fira Code","Courier New",monospace;
+    background:rgba(0,0,0,.45);border-left:5px solid var(--accent);
+    border-radius:12px;padding:14px 20px;font-size:19px;line-height:1.5;
+    color:#CFEAF9;white-space:pre-wrap;
+  }
+  .code.sm{font-size:17px;line-height:1.42}
+  .code b{color:var(--accent2);font-weight:700}
+  .code i{color:var(--accent3);font-style:normal;font-weight:700}
+
+  .flow{display:flex;align-items:stretch;gap:6px;margin-top:6px}
+  .flowbox{
+    flex:1;background:var(--card);border:2px solid var(--line);border-radius:14px;
+    padding:14px 8px;text-align:center;display:flex;flex-direction:column;
+    justify-content:center;gap:6px;
+  }
+  .flowbox b{font-size:16px;color:var(--accent);letter-spacing:.03em}
+  .flowbox span{font-size:13px;color:var(--muted);line-height:1.3}
+  .flowbox.gold{border-color:rgba(251,191,36,.5)}
+  .flowbox.gold b{color:var(--accent2)}
+  .flowbox.pink{border-color:rgba(244,114,182,.5)}
+  .flowbox.pink b{color:var(--accent3)}
+  .arrowx{display:flex;align-items:center;font-size:22px;color:var(--accent2);font-weight:900;padding:0 2px}
+
+  .timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  .tl{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 14px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .tl .num{
+    width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),#0891b2);color:#04121F;font-weight:900;font-size:17px;
+  }
+  .tl b{font-size:18px;line-height:1.2}
+  .tl p{font-size:14.5px;color:var(--muted);line-height:1.35}
+
+  .warn{
+    background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.45);
+    border-radius:14px;padding:12px 18px;font-size:18px;line-height:1.4;color:#FFE4E8;
+  }
+  .warn b{color:#FDA4AF}
+  .ok{
+    background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.45);
+    border-radius:14px;padding:12px 18px;font-size:18px;line-height:1.4;color:#E7FFEE;
+  }
+  .ok b{color:#86EFAC}
+  .note{
+    background:rgba(56,189,248,.10);border:1px dashed rgba(56,189,248,.5);
+    border-radius:14px;padding:11px 18px;font-size:17px;line-height:1.4;color:#D6EEFF;
+  }
+  .note b{color:var(--accent)}
+  .note.gold{background:rgba(251,191,36,.10);border-color:rgba(251,191,36,.5);color:#FDE7A9}
+  .note.gold b{color:var(--accent2)}
+
+  table{width:100%;border-collapse:collapse;font-size:17px;border-radius:12px;overflow:hidden}
+  th,td{padding:7px 12px;text-align:left;border-bottom:1px solid rgba(140,180,255,.18);vertical-align:top}
+  th{background:rgba(56,189,248,.16);color:#BFF3FB;font-size:14.5px;letter-spacing:.03em}
+  td:first-child{font-weight:700;color:#EEF4FF;white-space:nowrap}
+  tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+  table.data{font-size:15px}
+  table.data th,table.data td{padding:5px 10px}
+  table.rub{font-size:13.5px}
+  table.rub td:first-child{white-space:normal;color:#FDE7A9}
+  table.rub th,table.rub td{padding:6px 9px}
+  table.fx{font-size:16px}
+  table.fx td:first-child{color:#BAEBFF;white-space:nowrap;font-family:"Consolas",monospace}
+  table.fx td.res{color:var(--accent2);font-weight:800;text-align:center;white-space:nowrap}
+  table.fx code{font-family:"Consolas","Courier New",monospace;font-size:15.5px;color:#CFEAF9}
+
+  .f{opacity:0;transform:translateY(16px);transition:opacity .45s ease, transform .45s cubic-bezier(.22,.9,.3,1)}
+  .f.show{opacity:1;transform:none}
+
+  #hud{
+    position:fixed;left:0;right:0;bottom:14px;display:flex;align-items:center;
+    justify-content:center;gap:14px;z-index:50;
+  }
+  #hud button{
+    width:46px;height:46px;border-radius:50%;border:1px solid rgba(56,189,248,.5);
+    background:rgba(10,16,36,.85);color:var(--accent);font-size:18px;cursor:pointer;
+    display:grid;place-items:center;transition:.2s;
+  }
+  #hud button:hover{background:rgba(56,189,248,.2);transform:translateY(-2px)}
+  #counter{font-size:14px;color:#8FA9CC;font-weight:700;letter-spacing:.1em;min-width:70px;text-align:center}
+  #bar{position:fixed;left:0;bottom:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2));
+    transition:width .35s ease;z-index:60}
+
+  .cover{justify-content:center;gap:18px;padding-left:76px}
+  .cover h1{font-size:56px;line-height:1.06;font-weight:900;letter-spacing:-1.2px}
+  .grad{background:linear-gradient(100deg,#38BDF8 5%,#F472B6 55%,#FBBF24 95%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover .sub{font-size:22px}
+  .rule{width:110px;height:6px;border-radius:6px;
+    background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2))}
+  .quote{font-size:24px;font-weight:700;line-height:1.35;color:#EEF4FF;max-width:1000px}
+  .quote small{display:block;font-size:17px;color:var(--muted);margin-top:10px;font-weight:500}
+
+  .qcard{
+    background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);
+    border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;
+  }
+  .qcard .qn{
+    flex:0 0 auto;width:38px;height:38px;border-radius:50%;
+    display:grid;place-items:center;font-weight:900;font-size:19px;
+    background:linear-gradient(135deg,var(--accent),#0891b2);color:#04121F;
+  }
+  .qcard p{font-size:19px;line-height:1.35;color:#E7F2FF;font-weight:600}
+  .qcard.gold{border-left-color:var(--accent2)}
+  .qcard.gold .qn{background:linear-gradient(135deg,var(--accent2),#d97706);color:#2a1500}
+  .qcard.pink{border-left-color:var(--accent3)}
+  .qcard.pink .qn{background:linear-gradient(135deg,var(--accent3),#be185d);color:#2a0416}
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+  <!-- ============ 1 · COVER ============ -->
+  <section class="slide cover active">
+    <p class="eyebrow f">SMP NEGERI 19 KOTA BEKASI · TIM MGMP INFORMATIKA</p>
+    <div class="rule f"></div>
+    <h1 class="f">Fungsi Dasar,<br><span class="grad">Sort &amp; Filter</span></h1>
+    <p class="sub f">Informatika · Kelas VIII · Fase D · Elemen: Analisis Data</p>
+    <div class="chips f">
+      <span class="chip gold">Inquiry Learning</span>
+      <span class="chip pink">Computational Thinking</span>
+      <span class="chip">Deep Learning</span>
+    </div>
+  </section>
+
+  <!-- ============ 2 · PETA PERJALANAN ============ -->
+  <section class="slide">
+    <p class="eyebrow">Peta Perjalanan</p>
+    <h2 class="title">Alur Belajar Hari Ini</h2>
+    <div class="flow f">
+      <div class="flowbox"><b>❓ PEMICU</b><span>Pertanyaan ketua kelas</span></div>
+      <div class="arrowx">→</div>
+      <div class="flowbox"><b>📘 KONSEP</b><span>Sel, range, rumus</span></div>
+      <div class="arrowx">→</div>
+      <div class="flowbox gold"><b>🖱️ PRAKTIK</b><span>Sort &amp; filter</span></div>
+      <div class="arrowx">→</div>
+      <div class="flowbox pink"><b>🔍 INVESTIGASI</b><span>6 pertanyaan data</span></div>
+      <div class="arrowx">→</div>
+      <div class="flowbox"><b>📝 REFLEKSI</b><span>Simpulkan &amp; rencanakan</span></div>
+    </div>
+    <div class="note f">🧭 Setiap tahap saling terhubung. Fokus hari ini: <b>mengubah data mentah menjadi informasi</b>.</div>
+  </section>
+
+  <!-- ============ 3 · TUJUAN ============ -->
+  <section class="slide">
+    <p class="eyebrow">Tujuan Pembelajaran</p>
+    <h2 class="title">Apa yang Akan Kita Capai?</h2>
+    <div class="card f">
+      <h3>Tujuan Utama</h3>
+      <p style="font-size:20px;color:#E7F2FF;font-weight:600">Murid menerapkan fungsi hitung dan filter untuk menjawab pertanyaan data.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card f"><h3>📚 Pengetahuan</h3><p>Mengenal SUM, AVERAGE, COUNTIF, SUMIF, dan IF.</p></div>
+      <div class="card gold f"><h3>🛠️ Keterampilan</h3><p>Mengurutkan (sort) &amp; menyaring (filter) data tabel.</p></div>
+      <div class="card pink f"><h3>🤝 Sikap</h3><p>Teliti, mandiri, dan kolaboratif saat mengolah data.</p></div>
+    </div>
+    <div class="note gold f">🎯 <b>Indikator:</b> murid dapat menunjukkan rumus/langkah yang tepat beserta hasil yang sesuai.</div>
+  </section>
+
+  <!-- ============ 4 · PEMICU ============ -->
+  <section class="slide">
+    <p class="eyebrow">Pertanyaan Pemicu</p>
+    <h2 class="title">Kamu Ketua Kelas 8A 📋</h2>
+    <p class="lead f">Guru bertanya tentang tabel nilai &amp; kehadiran temanmu. Bagaimana menjawabnya <span class="hl">tanpa menghitung satu per satu</span>?</p>
+    <div class="grid g2">
+      <div class="qcard f"><div class="qn">1</div><p>Berapa rata-rata nilai Informatika kelas 8A?</p></div>
+      <div class="qcard gold f"><div class="qn">2</div><p>Siapa saja yang nilainya di atas 80?</p></div>
+      <div class="qcard pink f"><div class="qn">3</div><p>Tampilkan siswa dengan kehadiran tertinggi.</p></div>
+      <div class="qcard f"><div class="qn">4</div><p>Berapa siswa dengan kehadiran di atas 90%?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · SEL RANGE RUMUS ============ -->
+  <section class="slide">
+    <p class="eyebrow">Konsep Dasar</p>
+    <h2 class="title">Sel · Range · Rumus</h2>
+    <div class="grid g3">
+      <div class="card f">
+        <h3>🔲 Sel (Cell)</h3>
+        <div class="big">A1 · B2 · C3</div>
+        <p style="margin-top:8px">Satu kotak tempat data. Analogi: <b>satu loker</b> di lemari.</p>
+      </div>
+      <div class="card gold f">
+        <h3>📏 Range</h3>
+        <div class="big gold">D2 : D9</div>
+        <p style="margin-top:8px">Kumpulan sel dari D2 sampai D9. Analogi: <b>satu baris loker</b>.</p>
+      </div>
+      <div class="card pink f">
+        <h3>✏️ Rumus (Formula)</h3>
+        <div class="big pink">=</div>
+        <p style="margin-top:8px">Selalu diawali tanda <b>sama dengan</b>. Tanpa <code>=</code>, dianggap teks biasa.</p>
+      </div>
+    </div>
+    <div class="code f">Contoh: <b>=SUM(D2:D9)</b>  →  jumlahkan semua angka di D2 sampai D9.</div>
+    <div class="warn f">⚠ <b>Pemisah argumen:</b> Excel Indonesia pakai <b>titik koma ( ; )</b>, Google Sheets pakai <b>koma ( , )</b>. Sesuaikan dengan aplikasimu!</div>
+  </section>
+
+  <!-- ============ 6 · FUNGSI OVERVIEW ============ -->
+  <section class="slide">
+    <p class="eyebrow">Fungsi Dasar</p>
+    <h2 class="title">Rumus Siap Pakai</h2>
+    <p class="lead f">Fungsi = rumus yang sudah disiapkan aplikasi. Kita tinggal <span class="hl">memanggil namanya</span> dan memberi <span class="hl2">range</span>.</p>
+    <div class="grid g4">
+      <div class="card f"><h3>➕ Hitung</h3><p style="line-height:1.55">SUM<br>AVERAGE<br>COUNT · COUNTA</p></div>
+      <div class="card gold f"><h3>📊 Batas</h3><p style="line-height:1.55">MIN<br>MAX</p></div>
+      <div class="card pink f"><h3>🎯 Berkriteria</h3><p style="line-height:1.55">COUNTIF<br>SUMIF<br>AVERAGEIF</p></div>
+      <div class="card f"><h3>🧠 Logika</h3><p style="line-height:1.55">IF<br>untuk keputusan</p></div>
+    </div>
+    <div class="note f">🔑 <b>Pola umum:</b> <span style="font-family:Consolas,monospace;color:#FDE7A9">=NAMAFUNGSI( range ; kriteria )</span></div>
+  </section>
+
+  <!-- ============ 7 · SUM AVERAGE COUNT ============ -->
+  <section class="slide">
+    <p class="eyebrow">Fungsi Dasar · 1</p>
+    <h2 class="title">Menjumlah &amp; Menghitung</h2>
+    <table class="fx f">
+      <tr><th style="width:18%">Fungsi</th><th style="width:30%">Arti</th><th style="width:34%">Contoh</th><th style="width:18%;text-align:center">Hasil</th></tr>
+      <tr><td>SUM</td><td>Menjumlahkan angka</td><td><code>=SUM(D2:D9)</code></td><td class="res">633</td></tr>
+      <tr><td>AVERAGE</td><td>Rata-rata</td><td><code>=AVERAGE(D2:D9)</code></td><td class="res">79,125</td></tr>
+      <tr><td>COUNT</td><td>Banyak data angka</td><td><code>=COUNT(D2:D9)</code></td><td class="res">8</td></tr>
+      <tr><td>COUNTA</td><td>Banyak data tidak kosong</td><td><code>=COUNTA(B2:B9)</code></td><td class="res">8</td></tr>
+    </table>
+    <div class="grid g2">
+      <div class="card f"><h3>💡 Analogi SUM</h3><p>Seperti menjumlah uang di 8 kantong sekaligus.</p></div>
+      <div class="card gold f"><h3>🤔 COUNT vs COUNTA</h3><p>COUNT = hanya angka. COUNTA = angka <b>dan</b> teks.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 8 · MIN MAX ============ -->
+  <section class="slide">
+    <p class="eyebrow">Fungsi Dasar · 2</p>
+    <h2 class="title">Nilai Terkecil &amp; Terbesar</h2>
+    <div class="grid g2">
+      <div class="card f">
+        <h3>📉 MIN</h3>
+        <div class="big">=MIN(D2:D9)</div>
+        <p style="margin-top:10px;font-size:19px">Nilai terkecil → hasil <b style="color:var(--accent)">60</b></p>
+      </div>
+      <div class="card pink f">
+        <h3>📈 MAX</h3>
+        <div class="big pink">=MAX(D2:D9)</div>
+        <p style="margin-top:10px;font-size:19px">Nilai terbesar → hasil <b style="color:var(--accent3)">95</b></p>
+      </div>
+    </div>
+    <div class="note f">💡 <b>Ingat:</b> MIN/MAX mencari <i>nilai</i>-nya, bukan <i>nama</i> siswa. Untuk tahu siapa orangnya → gunakan <b>SORT</b> atau <b>FILTER</b>.</div>
+  </section>
+
+  <!-- ============ 9 · COUNTIF SUMIF AVERAGEIF ============ -->
+  <section class="slide">
+    <p class="eyebrow">Fungsi Dasar · 3</p>
+    <h2 class="title">Fungsi Berkriteria</h2>
+    <table class="fx f">
+      <tr><th style="width:18%">Fungsi</th><th style="width:36%">Contoh</th><th style="width:14%;text-align:center">Hasil</th><th style="width:32%">Kapan dipakai</th></tr>
+      <tr><td>COUNTIF</td><td><code>=COUNTIF(C2:C9;"8A")</code></td><td class="res">5</td><td>Hitung yang cocok kriteria</td></tr>
+      <tr><td>SUMIF</td><td><code>=SUMIF(C2:C9;"8A";D2:D9)</code></td><td class="res">385</td><td>Jumlahkan yang cocok</td></tr>
+      <tr><td>AVERAGEIF</td><td><code>=AVERAGEIF(C2:C9;"8A";D2:D9)</code></td><td class="res">77</td><td>Rata-rata yang cocok</td></tr>
+    </table>
+    <div class="grid g2">
+      <div class="card pink f"><h3>🔑 Pola 3 Argumen</h3><p>Range kriteria → Kriteria → Range nilai</p></div>
+      <div class="card gold f"><h3>💡 Analogi</h3><p>Seperti menyaring dulu, baru menghitung.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 10 · IF ============ -->
+  <section class="slide">
+    <p class="eyebrow">Fungsi Dasar · 4</p>
+    <h2 class="title">Fungsi IF — Membuat Keputusan</h2>
+    <div class="code f">=IF(D2&gt;=75;"Tuntas";"Belum tuntas")</div>
+    <div class="grid g3">
+      <div class="card f"><h3>1 · Syarat</h3><p style="font-family:Consolas,monospace;color:#BAEBFF;font-size:18px">D2&gt;=75</p></div>
+      <div class="card gold f"><h3>2 · Jika Benar</h3><p style="font-size:18px">"Tuntas"</p></div>
+      <div class="card pink f"><h3>3 · Jika Salah</h3><p style="font-size:18px">"Belum tuntas"</p></div>
+    </div>
+    <div class="note f">🧠 <b>Analogi:</b> seperti lampu lalu lintas — satu syarat, dua kemungkinan jawaban.</div>
+  </section>
+
+  <!-- ============ 11 · SORT ============ -->
+  <section class="slide">
+    <p class="eyebrow">Keterampilan 2</p>
+    <h2 class="title">Sort — Mengurutkan Data</h2>
+    <div class="grid g2">
+      <div class="card f">
+        <h3>⬆️ Ascending (A→Z)</h3>
+        <p style="font-size:19px">Kecil → besar · A → Z · lama → baru</p>
+      </div>
+      <div class="card pink f">
+        <h3>⬇️ Descending (Z→A)</h3>
+        <p style="font-size:19px">Besar → kecil · Z → A · baru → lama</p>
+      </div>
+    </div>
+    <div class="warn f">⚠ <b>Penting:</b> blok <b>seluruh tabel</b> (mis. A1:E9), bukan satu kolom saja — agar data tetap berpasangan.</div>
+    <div class="note f">✅ Sort <b>tidak menghilangkan data</b>. Sort hanya <b>mengubah urutan</b>.</div>
+  </section>
+
+  <!-- ============ 12 · LANGKAH SORT ============ -->
+  <section class="slide">
+    <p class="eyebrow">Praktik</p>
+    <h2 class="title">Langkah Melakukan Sort</h2>
+    <ol class="steps">
+      <li class="f">Blok range <b>A1:E9</b>.</li>
+      <li class="f">Klik menu <b>Data</b> → <b>Sort range</b>.</li>
+      <li class="f">Centang <b>"Data has header row"</b>.</li>
+      <li class="f">Pilih kolom yang ingin diurutkan.</li>
+      <li class="f">Pilih <b>A→Z</b> atau <b>Z→A</b>.</li>
+      <li class="f">Klik <b>Sort</b>. Selesai! ✅</li>
+    </ol>
+    <div class="note f">🔁 <b>Multi-level:</b> urutkan dulu berdasarkan <b>Kelas</b>, lalu <b>Nilai</b> tertinggi.</div>
+  </section>
+
+  <!-- ============ 13 · FILTER ============ -->
+  <section class="slide">
+    <p class="eyebrow">Keterampilan 3</p>
+    <h2 class="title">Filter — Menyaring Data</h2>
+    <div class="card f">
+      <h3>Inti Filter</h3>
+      <p style="font-size:19px;color:#E7F2FF">Hanya data yang <b>sesuai kriteria</b> yang tampil. Data lain <b>disembunyikan sementara</b> — <b>tidak dihapus</b>.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card f"><h3>Contoh 1</h3><p>Tampilkan hanya kelas <b>8B</b></p></div>
+      <div class="card gold f"><h3>Contoh 2</h3><p>Nilai <b>di atas 80</b></p></div>
+      <div class="card pink f"><h3>Contoh 3</h3><p>Kehadiran <b>minimal 90%</b></p></div>
+    </div>
+    <div class="note f">🧠 <b>Analogi:</b> seperti mencari satu jenis baju di lemari — yang lain tetap ada, hanya tidak terlihat.</div>
+  </section>
+
+  <!-- ============ 14 · LANGKAH FILTER ============ -->
+  <section class="slide">
+    <p class="eyebrow">Praktik</p>
+    <h2 class="title">Langkah Melakukan Filter</h2>
+    <ol class="steps">
+      <li class="f">Blok range <b>A1:E9</b>.</li>
+      <li class="f">Klik <b>Data</b> → <b>Create a filter</b>.</li>
+      <li class="f">Klik ikon filter di kolom tujuan.</li>
+      <li class="f">Pilih nilai/kondisi, mis. <b>Kelas = 8B</b>.</li>
+      <li class="f">Klik <b>OK</b> — data tersaring. ✅</li>
+      <li class="f">Hapus filter: ikon filter → <b>Clear filter</b>.</li>
+    </ol>
+  </section>
+
+  <!-- ============ 15 · DATA CONTOH ============ -->
+  <section class="slide">
+    <p class="eyebrow">Data Kerja</p>
+    <h2 class="title">Nilai &amp; Kehadiran Kelas 8</h2>
+    <table class="data f">
+      <tr><th style="width:8%">No</th><th style="width:22%">Nama</th><th style="width:12%">Kelas</th><th style="width:28%">Nilai Informatika</th><th style="width:30%">Kehadiran (%)</th></tr>
+      <tr><td>1</td><td>Adi</td><td>8A</td><td>85</td><td>95</td></tr>
+      <tr><td>2</td><td>Bina</td><td>8A</td><td>72</td><td>80</td></tr>
+      <tr><td>3</td><td>Citra</td><td>8A</td><td>90</td><td>100</td></tr>
+      <tr><td>4</td><td>Dedi</td><td>8A</td><td>60</td><td>70</td></tr>
+      <tr><td>5</td><td>Eka</td><td>8A</td><td>78</td><td>90</td></tr>
+      <tr><td>6</td><td>Fajar</td><td>8B</td><td>88</td><td>85</td></tr>
+      <tr><td>7</td><td>Gita</td><td>8B</td><td>95</td><td>100</td></tr>
+      <tr><td>8</td><td>Hana</td><td>8B</td><td>65</td><td>75</td></tr>
+    </table>
+    <p class="sub f">📌 Data ada di range <b style="color:#BAEBFF">A1:E9</b> — baris 1 adalah header.</p>
+  </section>
+
+  <!-- ============ 16 · INVESTIGASI 1-2 ============ -->
+  <section class="slide">
+    <p class="eyebrow">Investigasi Data · 1</p>
+    <h2 class="title">Rata-rata 8A &amp; Siswa 8B Nilai ≥ 80</h2>
+    <div class="card f">
+      <h3>❓ Pertanyaan 1</h3>
+      <p style="font-size:19px">Berapa rata-rata nilai Informatika kelas 8A?</p>
+      <div class="code sm" style="margin-top:8px">=AVERAGEIF(C2:C9;"8A";D2:D9)   →   <b>77</b></div>
+    </div>
+    <div class="card gold f">
+      <h3>❓ Pertanyaan 2</h3>
+      <p style="font-size:19px">Berapa siswa 8B dengan nilai minimal 80?</p>
+      <div class="code sm" style="margin-top:8px;border-left-color:var(--accent2)">Filter Kelas = 8B → Filter Nilai ≥ 80   →   <b>2 siswa (Fajar, Gita)</b></div>
+    </div>
+  </section>
+
+  <!-- ============ 17 · INVESTIGASI 3-4 ============ -->
+  <section class="slide">
+    <p class="eyebrow">Investigasi Data · 2</p>
+    <h2 class="title">Nilai Tertinggi &amp; Urutan Kehadiran</h2>
+    <div class="card pink f">
+      <h3>❓ Pertanyaan 3</h3>
+      <p style="font-size:19px">Siapa siswa dengan nilai tertinggi?</p>
+      <div class="code sm" style="margin-top:8px;border-left-color:var(--accent3)">=MAX(D2:D9)  atau  Sort Nilai descending   →   <b>Gita, 95</b></div>
+    </div>
+    <div class="card f">
+      <h3>❓ Pertanyaan 4</h3>
+      <p style="font-size:19px">Urutkan dari kehadiran tertinggi ke terendah. Siapa 3 teratas?</p>
+      <div class="code sm" style="margin-top:8px">Sort kolom Kehadiran descending   →   <b>Citra (100), Gita (100), Adi (95)</b></div>
+    </div>
+    <div class="note f">💡 Jika nilai <b>sama</b> (Citra &amp; Gita = 100), urutan keduanya bisa berbeda — itu <b>normal</b>.</div>
+  </section>
+
+  <!-- ============ 18 · INVESTIGASI 5-6 ============ -->
+  <section class="slide">
+    <p class="eyebrow">Investigasi Data · 3</p>
+    <h2 class="title">Dua Kriteria &amp; Total Nilai</h2>
+    <div class="card f">
+      <h3>❓ Pertanyaan 5</h3>
+      <p style="font-size:19px">Tampilkan siswa dengan kehadiran ≥ 90% <b>dan</b> nilai ≥ 80.</p>
+      <div class="code sm" style="margin-top:8px">Filter Kehadiran ≥ 90 → Filter Nilai ≥ 80   →   <b>Adi, Citra, Gita</b></div>
+    </div>
+    <div class="card gold f">
+      <h3>❓ Pertanyaan 6</h3>
+      <p style="font-size:19px">Berapa total nilai siswa dengan kehadiran ≥ 90%?</p>
+      <div class="code sm" style="margin-top:8px;border-left-color:var(--accent2)">=SUMIF(E2:E9;"&gt;=90";D2:D9)   →   <b>348</b></div>
+    </div>
+  </section>
+
+  <!-- ============ 19 · COMPUTATIONAL THINKING ============ -->
+  <section class="slide">
+    <p class="eyebrow">Computational Thinking</p>
+    <h2 class="title">4 Cara Berpikir yang Kita Latih</h2>
+    <div class="grid g2">
+      <div class="card f">
+        <h3>🧩 1 · Decomposition</h3>
+        <p>Pecah pertanyaan besar jadi kecil. <i>"Siswa berprestasi"</i> → nilai ≥ 80 &amp; hadir ≥ 90%.</p>
+      </div>
+      <div class="card gold f">
+        <h3>🔎 2 · Pattern Recognition</h3>
+        <p>Melihat pola: COUNTIF selalu butuh <b>range</b> + <b>kriteria</b>.</p>
+      </div>
+      <div class="card pink f">
+        <h3>🎯 3 · Abstraction</h3>
+        <p>Fokus ke kolom penting: <b>Nilai</b> &amp; <b>Kehadiran</b> saja.</p>
+      </div>
+      <div class="card f">
+        <h3>🪜 4 · Algorithm</h3>
+        <p>Susun urut: blok tabel → filter → sort → tulis kesimpulan.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 20 · UDL ============ -->
+  <section class="slide">
+    <p class="eyebrow">Universal Design for Learning</p>
+    <h2 class="title">Semua Murid Punya Jalannya</h2>
+    <div class="grid g3">
+      <div class="card f"><h3>👀 Visual</h3><p>Lihat tabel &amp; contoh rumus di layar.</p></div>
+      <div class="card f"><h3>👂 Audio</h3><p>Dengarkan penjelasan guru atau teman.</p></div>
+      <div class="card f"><h3>✋ Kinestetik</h3><p>Langsung praktik di komputer/laptop.</p></div>
+      <div class="card gold f"><h3>💬 Diskusi</h3><p>Berpasangan: satu operator, satu pemeriksa.</p></div>
+      <div class="card pink f"><h3>🎨 Ekspresi</h3><p>Tulisan, screenshot, video, atau presentasi.</p></div>
+      <div class="card f"><h3>🆓 Bebas Memilih</h3><p>Pilih cara yang paling nyaman bagimu.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 21 · TEMPLATE DUKUNGAN ============ -->
+  <section class="slide">
+    <p class="eyebrow">Template Dukungan</p>
+    <h2 class="title">Isi Bagian Kosongnya</h2>
+    <div class="grid g2">
+      <div class="card f">
+        <h3>1 · Rata-rata 8A</h3>
+        <p style="font-family:Consolas,monospace;color:#BAEBFF;font-size:15.5px">=AVERAGEIF(C2:C9;"_____";D2:D9)</p>
+        <p style="margin-top:6px;font-size:15.5px">Isi: <b>8A</b> · Hasil: <b>____</b></p>
+      </div>
+      <div class="card gold f">
+        <h3>2 · Jumlah siswa 8A</h3>
+        <p style="font-family:Consolas,monospace;color:#FDE7A9;font-size:15.5px">=COUNTIF(C2:C9;"_____")</p>
+        <p style="margin-top:6px;font-size:15.5px">Isi: <b>8A</b> · Hasil: <b>____</b></p>
+      </div>
+      <div class="card pink f">
+        <h3>3 · Nilai tertinggi</h3>
+        <p style="font-family:Consolas,monospace;color:#FBCFE8;font-size:15.5px">=MAX(D2:_____)</p>
+        <p style="margin-top:6px;font-size:15.5px">Isi: <b>D9</b> · Hasil: <b>____</b></p>
+      </div>
+      <div class="card f">
+        <h3>4 · Filter nilai &gt; 80</h3>
+        <p style="font-size:15.5px">Data → <b>________</b> → ikon filter → Greater than → <b>____</b> → OK</p>
+      </div>
+    </div>
+    <div class="note f">5 · Sort nilai tertinggi → terendah: Blok A1:E9 → Data → Sort range → pilih kolom Nilai → pilih <b>________</b> → Sort</div>
+  </section>
+
+  <!-- ============ 22 · REFLEKSI ============ -->
+  <section class="slide">
+    <p class="eyebrow">Refleksi</p>
+    <h2 class="title">Tuliskan Jawabanmu</h2>
+    <div class="grid g2">
+      <div class="qcard f"><div class="qn">1</div><p>Fungsi apa yang paling membantumu hari ini?</p></div>
+      <div class="qcard gold f"><div class="qn">2</div><p>Kapan memakai sort, kapan memakai filter?</p></div>
+      <div class="qcard pink f"><div class="qn">3</div><p>Kesalahan apa yang pernah kamu lakukan saat menulis rumus?</p></div>
+      <div class="qcard f"><div class="qn">4</div><p>Bagaimana data membantumu mengambil keputusan?</p></div>
+    </div>
+    <p class="sub f">✍️ Tulis di buku catatan atau sticky note. Kumpulkan sebelum bel berbunyi.</p>
+  </section>
+
+  <!-- ============ 23 · ASESMEN ============ -->
+  <section class="slide">
+    <p class="eyebrow">Asesmen Pertemuan</p>
+    <h2 class="title">Lembar Investigasi Data</h2>
+    <p class="lead f">Buka file <b>"Data Nilai dan Kehadiran Kelas 8"</b>, lalu jawab 6 pertanyaan dengan rumus/langkah dan hasil.</p>
+    <table class="rub f">
+      <tr><th>Kriteria</th><th>Sangat Baik (4)</th><th>Baik (3)</th><th>Cukup (2)</th><th>Perlu Bimbingan (1)</th></tr>
+      <tr><td>Pemahaman Konsep</td>
+        <td>Menjelaskan konsep &amp; memberi contoh lain</td>
+        <td>Menjelaskan konsep dengan benar</td>
+        <td>Menjelaskan sebagian konsep</td>
+        <td>Belum menjelaskan fungsi, sort, filter</td></tr>
+      <tr><td>Computational Thinking</td>
+        <td>Menggabungkan fungsi, sort, filter secara efisien</td>
+        <td>Rumus/langkah benar, hasil sesuai</td>
+        <td>Sebagian rumus/langkah benar</td>
+        <td>Rumus/langkah belum tepat</td></tr>
+      <tr><td>Kolaborasi &amp; Komunikasi</td>
+        <td>Membantu teman &amp; menjelaskan runtut</td>
+        <td>Aktif berdiskusi &amp; menyampaikan hasil</td>
+        <td>Kadang terlibat</td>
+        <td>Belum terlibat</td></tr>
+      <tr><td>Kemandirian &amp; Refleksi</td>
+        <td>Mandiri, teliti, refleksi mendalam &amp; rencana perbaikan</td>
+        <td>Mandiri &amp; refleksi jelas</td>
+        <td>Mandiri sebagian, refleksi singkat</td>
+        <td>Belum mandiri &amp; belum menulis refleksi</td></tr>
+    </table>
+  </section>
+
+  <!-- ============ 24 · PENUTUP ============ -->
+  <section class="slide cover" style="align-items:flex-start">
+    <p class="eyebrow f">SMP NEGERI 19 KOTA BEKASI · TIM MGMP INFORMATIKA</p>
+    <h1 class="f" style="font-size:54px">Terima Kasih! 🙌</h1>
+    <div class="rule f"></div>
+    <p class="quote f">"Data yang rapi adalah keputusan yang berani —<br>mulailah dari satu rumus kecil hari ini."
+      <small>— Dengan fungsi kita menghitung, dengan sort kita mengurutkan, dengan filter kita menyaring. 📊✨</small>
+    </p>
+    <div class="chips f">
+      <span class="chip">Informatika Kelas VIII</span>
+      <span class="chip pink">Analisis Data</span>
+      <span class="chip gold">Fungsi · Sort · Filter</span>
+    </div>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="hud">
+  <button id="btnPrev" title="Sebelumnya">◀</button>
+  <span id="counter">1 / 24</span>
+  <button id="btnNext" title="Berikutnya">▶</button>
+  <button id="btnFull" title="Layar penuh">⛶</button>
+</div>
+
+<script>
+(function(){
+  const stage   = document.getElementById('stage');
+  const slides  = Array.from(document.querySelectorAll('.slide'));
+  const bar     = document.getElementById('bar');
+  const counter = document.getElementById('counter');
+  let cur = 0;
+
+  function resize(){
+    const s = Math.min(window.innerWidth / 1280, (window.innerHeight - 70) / 720);
+    stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function showSlide(i, revealAll){
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === cur));
+    const frags = slides[cur].querySelectorAll('.f');
+    frags.forEach(f => f.classList.remove('show'));
+    if (revealAll) frags.forEach(f => f.classList.add('show'));
+    updateHud();
+  }
+
+  function updateHud(){
+    counter.textContent = (cur + 1) + ' / ' + slides.length;
+    bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  }
+
+  function next(){
+    const pending = slides[cur].querySelectorAll('.f:not(.show)');
+    if (pending.length) { pending[0].classList.add('show'); }
+    else if (cur < slides.length - 1) { showSlide(cur + 1, false); }
+  }
+
+  function prev(){
+    const shown = slides[cur].querySelectorAll('.f.show');
+    if (shown.length) { shown[shown.length - 1].classList.remove('show'); }
+    else if (cur > 0) { showSlide(cur - 1, true); }
+  }
+
+  document.getElementById('btnNext').addEventListener('click', e => { e.stopPropagation(); next(); });
+  document.getElementById('btnPrev').addEventListener('click', e => { e.stopPropagation(); prev(); });
+  document.getElementById('btnFull').addEventListener('click', e => {
+    e.stopPropagation();
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  });
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('#hud')) return;
+    next();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' ','PageDown','Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+    if (e.key === 'Home') showSlide(0, false);
+    if (e.key === 'End')  showSlide(slides.length - 1, true);
+    if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  showSlide(0, false);
+})();
+</script>
+</body>
+</html>
